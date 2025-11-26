@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block page_header %}Update Medicine{% endblock %}
+{% block content %}
+<div class="card-modern">
+  <h5>Update Medicine</h5>
+  <form id="updateForm" class="row g-3"></form>
+</div>
+
+{% block scripts %}
+<script>
+const params = new URLSearchParams(window.location.search);
+const id = params.get('id');
+
+async function loadMedicineForEdit() {
+  const meds = await apiFetch('/medicines');
+  const med = meds.find(m => String(m.medicine_id) === String(id));
+  if (!med) { alert('Not found'); return; }
+
+  document.getElementById('updateForm').innerHTML = `
+    <div class="col-md-6"><label class="form-label">Name</label><input id="name" class="form-control" value="${med.name}" /></div>
+    <div class="col-md-6"><label class="form-label">Batch</label><input id="batch_number" class="form-control" value="${med.batch_number||''}" /></div>
+    <div class="col-md-4"><label class="form-label">Expiry</label><input id="expiry_date" type="date" class="form-control" value="${med.expiry_date||''}" /></div>
+    <div class="col-md-4"><label class="form-label">Quantity</label><input id="quantity" type="number" class="form-control" value="${med.quantity||0}" /></div>
+    <div class="col-md-4"><label class="form-label">Price</label><input id="price" type="number" step="0.01" class="form-control" value="${med.price||0}" /></div>
+    <div class="col-12">
+      <button class="btn btn-primary" id="btnUpdate">Update</button>
+      <a href="/medicines_page" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </div>`;
+  document.getElementById('btnUpdate').addEventListener('click', async (e)=>{
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('name').value,
+      batch_number: document.getElementById('batch_number').value,
+      expiry_date: document.getElementById('expiry_date').value,
+      quantity: parseInt(document.getElementById('quantity').value||'0',10),
+      supplier_id: med.supplier_id || null,
+      category_id: med.category_id || null,
+      price: parseFloat(document.getElementById('price').value||'0')
+    };
+    try {
+      await apiFetch(`/medicines/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      alert('Updated');
+      window.location.href = '/medicines_page';
+    } catch(err){
+      console.error(err); alert('Error updating');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadMedicineForEdit);
+</script>
+{% endblock %}
+{% endblock %}

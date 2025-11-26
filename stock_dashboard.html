@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-3"> In-stock Medicines (Stock Admin)</h2>
+
+<p class="text-muted">You are logged in as: <strong>{{ session.name }}</strong> ({{ session.role }})</p>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>ID</th><th>Name</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Supplier</th><th>Category</th><th>Price</th>
+    </tr>
+  </thead>
+  <tbody id="stockMedicineTable"></tbody>
+</table>
+
+<script>
+async function loadStockMedicines() {
+  try {
+    const res = await fetch('/medicines-in-stock');
+    const data = await res.json();
+    const tbody = document.getElementById("stockMedicineTable");
+    tbody.innerHTML = "";
+    data.forEach(m => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${m.medicine_id}</td>
+          <td>${m.name}</td>
+          <td>${m.batch_number || '-'}</td>
+          <td>${m.expiry_date || '-'}</td>
+          <td>${m.quantity}</td>
+          <td>${m.supplier_name || m.supplier_id || '-'}</td>
+          <td>${m.category_name || m.category_id || '-'}</td>
+          <td>${m.price !== null ? '₹' + m.price.toFixed(2) : '-'}</td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    console.error("Error loading stock medicines:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadStockMedicines);
+</script>
+
+{% endblock %}

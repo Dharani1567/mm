@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block page_header %}Add Medicine{% endblock %}
+{% block content %}
+<div class="card-modern">
+  <h5>Add New Medicine</h5>
+  <form id="addForm" class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Name</label>
+      <input id="name" class="form-control" required />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Batch Number</label>
+      <input id="batch_number" class="form-control" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Expiry Date</label>
+      <input type="date" id="expiry_date" class="form-control" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Quantity</label>
+      <input type="number" id="quantity" class="form-control" value="0" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Price</label>
+      <input type="number" id="price" class="form-control" step="0.01" />
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Supplier</label>
+      <select id="supplier_id" class="form-select">
+        <option value="">-- select supplier --</option>
+      </select>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Category</label>
+      <select id="category_id" class="form-select">
+        <option value="">-- select category --</option>
+      </select>
+    </div>
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">Add Medicine</button>
+      <a href="/medicines_page" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </div>
+  </form>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async ()=> {
+  // fetch suppliers & categories and populate selects
+  try {
+    const suppliers = await apiFetch('/suppliers');
+    const sEl = document.getElementById('supplier_id');
+    suppliers.forEach(s => sEl.innerHTML += `<option value="${s.supplier_id}">${s.supplier_name || s.name}</option>`);
+
+    // categories endpoint may need to exist. Try /categories
+    try {
+      const cats = await apiFetch('/categories');
+      const cEl = document.getElementById('category_id');
+      cats.forEach(c => cEl.innerHTML += `<option value="${c.category_id}">${c.category_name}</option>`);
+    } catch(_) { /* ignore if categories endpoint not present */ }
+  } catch(e){ console.warn('Could not load selects',e); }
+
+  document.getElementById('addForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const payload = {
+      name: document.getElementById('name').value,
+      batch_number: document.getElementById('batch_number').value,
+      expiry_date: document.getElementById('expiry_date').value,
+      quantity: parseInt(document.getElementById('quantity').value || '0',10),
+      supplier_id: parseInt(document.getElementById('supplier_id').value || '0',10) || null,
+      category_id: parseInt(document.getElementById('category_id').value || '0',10) || null,
+      price: parseFloat(document.getElementById('price').value || '0')
+    };
+    try {
+      await apiFetch('/medicines', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      alert('Added');
+      window.location.href = '/medicines_page';
+    } catch(err){
+      alert('Error adding medicine. See console.');
+      console.error(err);
+    }
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

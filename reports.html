@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block page_header %}
+Reports
+{% endblock %}
+
+{% block content %}
+<div class="card-modern p-4">
+  <p>Add custom reports here (sales, purchases, stock history, expiry reports).</p>
+
+  <div class="row">
+
+    <div class="col-md-6 mb-3">
+      <div class="card p-3 shadow-sm">
+        <h6>Stock Report</h6>
+        <button class="btn btn-primary mt-2" onclick="downloadStock()">Generate</button>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <div class="card p-3 shadow-sm">
+        <h6>Expiry Report</h6>
+        <button class="btn btn-primary mt-2" onclick="downloadExpiry()">Generate</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function downloadStock() {
+  window.location.href = "/report/stock";
+}
+
+function downloadExpiry() {
+  window.location.href = "/report/expiry";
+}
+</script>
+{% endblock %}

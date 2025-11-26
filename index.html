@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Medicine Manager{% endblock %}
+{% block page_header %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card-modern">
+      <h6 class="mb-2">Total Medicines</h6>
+      <div class="d-flex align-items-center justify-content-between">
+        <h2 id="totalCount">0</h2>
+        <div><i class="bi bi-box-seam" style="font-size:28px;color:var(--primary)"></i></div>
+      </div>
+      <small class="text-muted">Total medicines in the system</small>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card-modern">
+      <h6 class="mb-2">Expiring Soon (30d)</h6>
+      <h2 id="expiredCount">0</h2>
+      <small class="text-muted">Medicines expiring within next 30 days</small>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card-modern">
+      <h6 class="mb-2">Low Stock (&lt; 10)</h6>
+      <h2 id="lowStockCount">0</h2>
+      <small class="text-muted">Medicines with low quantity</small>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="card-modern mb-3">
+      <canvas id="stockChart" height="120"></canvas>
+    </div>
+
+    <div class="card-modern">
+      <div class="d-flex justify-content-between mb-2">
+        <h5 class="m-0">Medicine List</h5>
+        <div class="ms-3">
+          <input id="searchBox" class="form-control form-control-sm" placeholder="Search..." />
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Supplier</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="medicineTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function initDashboard(){
+  try {
+    const meds = await apiFetch('/medicines');
+    if (!Array.isArray(meds)) return;
+
+    const tbody = document.getElementById('medicineTable');
+    tbody.innerHTML = '';
+
+    const today = new Date();
+    let expiredCount = 0, lowCount = 0;
+
+    meds.forEach(m => {
+      const expDate = m.expiry_date ? new Date(m.expiry_date) : null;
+      let rowClass = '';
+
+      if (expDate){
+        const diffDays = Math.ceil((expDate - today)/(1000*3600*24));
+        if (diffDays < 0) { rowClass='table-danger'; expiredCount++; }
+        else if (diffDays <= 30) { rowClass='table-warning'; expiredCount++; }
+      }
+
+      if (m.quantity !== null && m.quantity <= 10) lowCount++;
+
+      tbody.innerHTML += `
+        <tr class="${rowClass}">
+          <td>${m.medicine_id}</td>
+          <td>${m.name}</td>
+          <td>${m.batch_number || '-'}</td>
+          <td>${m.expiry_date || '-'}</td>
+          <td>${m.quantity}</td>
+          <td>${m.supplier_id || '-'}</td>
+          <td>
+            <a class="btn btn-sm btn-outline-primary" href="/update_medicine_page?id=${m.medicine_id}">Edit</a>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteMedicine(${m.medicine_id})">Delete</button>
+          </td>
+        </tr>`;
+    });
+
+    document.getElementById('totalCount').textContent = meds.length;
+    document.getElementById('expiredCount').textContent = expiredCount;
+    document.getElementById('lowStockCount').textContent = lowCount;
+
+    const healthy = meds.length - expiredCount - lowCount;
+
+    const ctx = document.getElementById('stockChart').getContext('2d');
+    new Chart(ctx, { 
+      type:'doughnut',
+      data:{ 
+        labels:['Expired/soon','Low stock','Healthy'], 
+        datasets:[{ data:[expiredCount, lowCount, healthy] }] 
+      }
+    });
+
+    const alerts = await apiFetch('/alerts');
+    const alertBox = document.getElementById('alerts');
+    alertBox.innerHTML = '';
+
+    if (alerts.low_stock?.length) {
+      alertBox.innerHTML += '<h6 class="text-danger">Low stock</h6>';
+      alerts.low_stock.forEach(a => alertBox.innerHTML += `<div>${a.name} — ${a.quantity}</div>`);
+    }
+    if (alerts.near_expiry?.length) {
+      alertBox.innerHTML += '<h6 class="text-warning mt-2">Near expiry</h6>';
+      alerts.near_expiry.forEach(a => alertBox.innerHTML += `<div>${a.name} — ${a.expiry_date}</div>`);
+    }
+
+    const expiryList = document.getElementById('expiryList');
+    const soon = meds.filter(m => m.expiry_date && new Date(m.expiry_date) - today <= 30*24*3600*1000);
+    expiryList.innerHTML = soon.slice(0,6).map(s => `<div>${s.name} — ${s.expiry_date}</div>`).join('');
+
+  } catch(e){ 
+    console.error(e); 
+  }
+}
+
+async function deleteMedicine(id){
+  if (!confirm('Delete?')) return;
+  await apiFetch(`/medicines/${id}`, { method:'DELETE' });
+  initDashboard();
+}
+
+document.addEventListener('DOMContentLoaded', ()=> {
+  const s = document.getElementById('searchBox');
+  s?.addEventListener('input', () => {
+    const q = s.value.toLowerCase();
+    document.querySelectorAll('#medicineTable tr').forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+
+  window.addEventListener('global-search', (ev) => {
+    const q = ev.detail.toLowerCase();
+    document.querySelectorAll('#medicineTable tr').forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+
+});
+</script>
+{% endblock %}
