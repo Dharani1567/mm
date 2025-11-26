@@ -1,0 +1,87 @@
+:root{
+  --primary:#1D4ED8;
+  --secondary:#0EA5E9;
+  --bg:#F5F7FA;
+  --card:#FFFFFF;
+  --muted:#6B7280;
+  --danger:#e11d48;
+  --radius:12px;
+  --glass: rgba(255,255,255,0.6);
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* Layout */
+body { background: var(--bg); color:#0f172a; margin:0; }
+.app-layout { display:flex; min-height:100vh; }
+
+/* Sidebar */
+.sidebar{
+  width:260px;
+  background:linear-gradient(180deg,var(--card),#f8fafc);
+  border-right:1px solid rgba(15,23,42,0.04);
+  padding:18px 12px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.03);
+  display:flex; flex-direction:column;
+}
+.brand { padding:6px 12px; margin-bottom:6px; }
+.brand-link { display:flex; gap:10px; align-items:center; text-decoration:none; color:var(--primary); font-weight:700; }
+.brand-icon { font-size:22px; color:var(--primary); }
+.nav-menu { margin-top:12px; flex:1; }
+.nav-menu ul { list-style:none; padding:0; margin:0; }
+.nav-menu li { margin:6px 0; }
+.nav-menu .nav-link {
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  color:#0f172a; text-decoration:none; border-radius:10px; transition:all .12s;
+}
+.nav-menu .nav-link i { font-size:18px; color:var(--muted); }
+.nav-menu .nav-link:hover{ background: rgba(29,78,216,0.06); color:var(--primary); transform:translateY(-1px); box-shadow:0 6px 18px rgba(29,78,216,0.06); }
+.nav-menu .nav-link.active { background:var(--primary); color:white; }
+
+.sidebar-footer { padding:8px 12px; font-size:12px; }
+
+/* Main area */
+.main { flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar { background:transparent; padding:12px 20px; border-bottom:1px solid rgba(15,23,42,0.04); }
+.topbar .btn-ghost { background:transparent; border:none; font-size:18px; }
+.content { flex:1; }
+
+/* Cards */
+.card-modern { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:0 8px 24px rgba(2,6,23,0.04); }
+
+/* Table */
+.table { background:transparent; }
+.table thead th { background:rgba(15,23,42,0.03); position: sticky; top:0; z-index:1; }
+
+/* Status labels */
+.badge-expired { background:#fee2e2; color:var(--danger); padding:6px 10px; border-radius:999px; font-weight:600; }
+.badge-near { background:#fff7ed; color:#92400e; padding:6px 10px; border-radius:999px; font-weight:600; }
+
+/* Small screens */
+@media (max-width: 991px){
+  .sidebar { position: fixed; left:-320px; top:0; bottom:0; z-index:1050; transition: left .22s ease; }
+  .sidebar.open { left:0; }
+  .main { margin-left:0; }
+}
+
+/* Buttons */
+.btn-primary {
+  background:var(--primary); border:none; color:white; border-radius:10px;
+}
+.btn-outline-secondary { border-radius:8px; }
+
+/* Minor helpers */
+.form-control:focus { box-shadow: 0 0 0 4px rgba(29,78,216,0.06); border-color:var(--primary); }
+/* card-modern for dashboard cards and tables */
+.card-modern {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+  margin-bottom: 16px;
+}
+
+/* small visual tweaks for medicines table */
+#medicinesTable thead th { cursor: pointer; user-select: none; }
+#medicinesTable tbody tr td { vertical-align: middle; }
+.badge { font-size: 0.72rem; }
+.table-hover tbody tr:hover { transform: translateY(-1px); transition: all 120ms ease; }
